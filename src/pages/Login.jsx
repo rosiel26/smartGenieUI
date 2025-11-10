@@ -172,12 +172,13 @@ export default function Login() {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
+        // remove redirectTo OR point to your site root
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: window.location.origin, // just the root URL
         },
       });
       if (error) throw error;
-      // The dashboard will read the flag on redirect
+      // Supabase will handle redirect
     } catch (err) {
       console.error(err);
       setErrorMsg(`Failed to sign in with ${provider}. Please try again.`);
