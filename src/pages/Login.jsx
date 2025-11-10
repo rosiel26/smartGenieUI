@@ -1,132 +1,3 @@
-// import React, { useState, useEffect } from "react";
-// import { useNavigate } from "react-router-dom";
-// import { supabase } from "../supabaseClient";
-// import { FiEye, FiEyeOff } from "react-icons/fi";
-
-// export default function Login() {
-//   const navigate = useNavigate();
-//   const [email, setEmail] = useState("");
-//   const [password, setPassword] = useState("");
-//   const [errorMsg, setErrorMsg] = useState("");
-//   const [showPassword, setShowPassword] = useState(false); // ✅ Show/hide password
-
-//   const handleLogin = async (e) => {
-//     e.preventDefault();
-//     setErrorMsg("");
-
-//     const { data, error } = await supabase.auth.signInWithPassword({
-//       email,
-//       password,
-//     });
-
-//     if (error) {
-//       setErrorMsg("Invalid email or password");
-//     } else {
-//       navigate("/personaldashboard");
-//     }
-//   };
-
-//   useEffect(() => {
-//     const checkUser = async () => {
-//       const {
-//         data: { user },
-//       } = await supabase.auth.getUser();
-
-//       if (user) {
-//         navigate("/personaldashboard", { replace: true });
-//       }
-//     };
-
-//     checkUser();
-//   }, [navigate]);
-
-//   return (
-//     <div className="min-h-screen bg-gradient-to-br from-white via-green-50 to-green-100 flex items-center justify-center px-4 py-12">
-//       <div className="bg-white w-[400px] max-w-md h-[650px] rounded-3xl shadow-2xl p-6 sm:p-8 flex flex-col items-center">
-//         <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-800 mb-2 text-center mt-10">
-//           Welcome Back 👋
-//         </h2>
-//         <p className="text-center text-gray-500 mb-10 text-sm sm:text-base px-2 sm:px-0">
-//           Sign in to continue using{" "}
-//           <span className="font-semibold text-green-600">SmartGenie</span>
-//         </p>
-
-//         <form
-//           onSubmit={handleLogin}
-//           className="w-full space-y-4 sm:space-y-6 px-2 sm:px-0"
-//         >
-//           {errorMsg && (
-//             <div className="bg-red-100 text-red-600 px-4 py-2 rounded-lg text-center text-sm sm:text-base">
-//               {errorMsg}
-//             </div>
-//           )}
-
-//           <div>
-//             <label className="block text-sm font-medium text-gray-700 mb-1">
-//               Email
-//             </label>
-//             <input
-//               type="email"
-//               value={email}
-//               onChange={(e) => setEmail(e.target.value)}
-//               placeholder="you@example.com"
-//               required
-//               className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 text-sm sm:text-base"
-//             />
-//           </div>
-
-//           <div className="relative">
-//             <label className="block text-sm font-medium text-gray-700 mb-1">
-//               Password
-//             </label>
-//             <input
-//               type={showPassword ? "text" : "password"}
-//               value={password}
-//               onChange={(e) => setPassword(e.target.value)}
-//               placeholder="••••••••"
-//               required
-//               className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 text-sm sm:text-base pr-10"
-//             />
-//             <span
-//               onClick={() => setShowPassword(!showPassword)}
-//               className="absolute right-3 top-[38px] sm:top-[42px] cursor-pointer text-gray-400 hover:text-gray-600"
-//             >
-//               {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
-//             </span>
-//           </div>
-
-//           <button
-//             type="submit"
-//             className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 sm:py-3 rounded-xl shadow-lg transition duration-300 text-sm sm:text-base"
-//           >
-//             Sign In
-//           </button>
-//         </form>
-
-//         <div className="mt-4 sm:mt-6 text-center text-sm sm:text-base text-gray-600 space-y-1 sm:space-y-2">
-//           <p>
-//             Don’t have an account?{" "}
-//             <span
-//               onClick={() => navigate("/signup")}
-//               className="text-green-600 hover:underline cursor-pointer"
-//             >
-//               Create one
-//             </span>
-//           </p>
-//           <p
-//             onClick={() => navigate("/forgot-password")}
-//             className="text-green-600 hover:underline cursor-pointer"
-//           >
-//             Forgot your password?
-//           </p>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
-// ============================================================================================================================
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
@@ -152,41 +23,32 @@ export default function Login() {
       email,
       password,
     });
-
     setLoading(false);
 
     if (error) {
       setErrorMsg("Invalid email or password");
     } else {
-      // ✅ Set disclaimer flag
       sessionStorage.setItem("showDisclaimer", "true");
       navigate("/personaldashboard");
     }
   };
-  // After successful login
-  localStorage.setItem("lastLoginTime", new Date().toISOString());
 
   // -------------------- OAuth login --------------------
   const handleOAuthLogin = async (provider) => {
     setErrorMsg("");
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        // remove redirectTo OR point to your site root
-        options: {
-          redirectTo: window.location.origin, // just the root URL
-        },
-      });
+      const { error } = await supabase.auth.signInWithOAuth({ provider });
       if (error) throw error;
-      // Supabase will handle redirect
+      // Supabase will redirect to site root
     } catch (err) {
       console.error(err);
       setErrorMsg(`Failed to sign in with ${provider}. Please try again.`);
     }
   };
 
-  // -------------------- Auto-navigate if already logged in --------------------
+  // -------------------- Auto-redirect if already logged in --------------------
   useEffect(() => {
+    // 1️⃣ Check current user on page load
     const checkUser = async () => {
       const {
         data: { user },
@@ -194,8 +56,23 @@ export default function Login() {
       if (user) navigate("/personaldashboard", { replace: true });
     };
     checkUser();
+
+    // 2️⃣ Listen for OAuth login redirect
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session?.user) {
+          sessionStorage.setItem("showDisclaimer", "true");
+          navigate("/personaldashboard", { replace: true });
+        }
+      }
+    );
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, [navigate]);
 
+  // -------------------- UI --------------------
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-green-50 to-green-100 flex items-center justify-center px-4 py-12">
       <div className="bg-white w-[400px] max-w-md rounded-3xl shadow-2xl p-6 sm:p-8 flex flex-col items-center">
@@ -236,8 +113,6 @@ export default function Login() {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Password
             </label>
-
-            {/* Make only this container relative so the button is centered inside the input */}
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -247,7 +122,6 @@ export default function Login() {
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-green-500 text-sm sm:text-base pr-12"
               />
-
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
