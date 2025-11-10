@@ -1,360 +1,3 @@
-// import { useState, useEffect } from "react";
-// import { useNavigate } from "react-router-dom";
-// import { supabase } from "../supabaseClient";
-
-// export default function AccountManagement() {
-//   const navigate = useNavigate();
-//   const [confirmDelete, setConfirmDelete] = useState(false);
-//   const [confirmClear, setConfirmClear] = useState(false);
-//   const [loading, setLoading] = useState(false);
-//   const [userId, setUserId] = useState(null);
-
-//   // Get current user
-//   useEffect(() => {
-//     const fetchUser = async () => {
-//       const { data, error } = await supabase.auth.getUser();
-//       if (error) {
-//         console.error(error);
-//         navigate("/login");
-//         return;
-//       }
-
-//       if (!data.user) {
-//         navigate("/login");
-//       } else {
-//         setUserId(data.user.id);
-//       }
-//     };
-//     fetchUser();
-//   }, [navigate]);
-
-//   // Clear health profiles and meal logs
-//   const handleClearData = async () => {
-//     if (!userId) return;
-//     console.log("Clearing data for user:", userId);
-//     setLoading(true);
-
-//     try {
-//       // Delete health profiles
-//       const { data: healthData, error: healthError } = await supabase
-//         .from("health_profiles")
-//         .delete()
-//         .eq("user_id", userId);
-//       if (healthError) throw healthError;
-
-//       console.log("Deleted health profiles:", healthData);
-
-//       // Delete meal logs
-//       const { data: mealData, error: mealError } = await supabase
-//         .from("meal_logs")
-//         .delete()
-//         .eq("user_id", userId);
-//       if (mealError) throw mealError;
-
-//       console.log("Deleted meal logs:", mealData);
-
-//       alert("All your health profiles and meal logs have been cleared.");
-//       setConfirmClear(false);
-//     } catch (error) {
-//       console.error(error);
-//       alert("Failed to clear data. Make sure RLS policies allow deletion.");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   // Delete account + auth + health profiles + meal logs via Edge Function
-//   const handleDeleteAccount = async () => {
-//     if (!userId) return;
-//     setLoading(true);
-
-//     try {
-//       const res = await fetch("/functions/v1/delete-user", {
-//         method: "POST",
-//         headers: { "Content-Type": "application/json" },
-//         body: JSON.stringify({ userId }),
-//       });
-
-//       const data = await res.json();
-
-//       if (res.ok && data.success) {
-//         alert("Your account and all data have been deleted.");
-//         await supabase.auth.signOut(); // ensure user is signed out
-//         navigate("/login");
-//       } else {
-//         throw new Error(data.error || "Failed to delete account.");
-//       }
-//     } catch (error) {
-//       console.error(error);
-//       alert("Failed to delete account.");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   return (
-//     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-200 flex items-center justify-center px-4 py-6">
-//       <div className="bg-white w-[375px] h-[700px] rounded-2xl shadow-2xl overflow-auto flex flex-col">
-//         {/* Header */}
-//         <div className="bg-blue-400 p-4 rounded-t-2xl text-white shadow flex items-center">
-//           {/* Back Button */}
-//           <button
-//             onClick={() => navigate("/settings")}
-//             className="text-white text-sm"
-//           >
-//             Back
-//           </button>
-//           {/* FAQ Title */}
-//           <div className="flex-1 text-center font-semibold text-white text-sm">
-//             Account Management
-//           </div>
-//           {/* Placeholder to balance the flex */}
-//           <div className="w-[40px]"></div>
-//         </div>
-
-//         {/* Content */}
-//         <div className="p-4 flex-1 overflow-auto flex flex-col justify-start space-y-6">
-//           <div className="text-gray-700 text-sm">
-//             Manage your account: delete account or clear your health profile
-//             data and meal logs.
-//           </div>
-
-//           {/* Clear Data */}
-//           <div>
-//             {confirmClear ? (
-//               <div className="flex flex-col space-y-2">
-//                 <div className="text-gray-700 text-sm">
-//                   Clear all health profiles and meal logs?
-//                 </div>
-//                 <div className="flex space-x-2">
-//                   <button
-//                     onClick={handleClearData}
-//                     disabled={loading}
-//                     className="flex-1 bg-yellow-500 text-white py-2 rounded hover:bg-yellow-600 transition disabled:opacity-50"
-//                   >
-//                     {loading ? "Clearing..." : "Yes, Clear Data"}
-//                   </button>
-//                   <button
-//                     onClick={() => setConfirmClear(false)}
-//                     className="flex-1 bg-gray-300 text-gray-700 py-2 rounded hover:bg-gray-400 transition"
-//                   >
-//                     Cancel
-//                   </button>
-//                 </div>
-//               </div>
-//             ) : (
-//               <button
-//                 onClick={() => setConfirmClear(true)}
-//                 className="w-full bg-yellow-500 text-white py-2 rounded hover:bg-yellow-600 transition"
-//               >
-//                 Clear Health Profiles & Meal Logs
-//               </button>
-//             )}
-//           </div>
-
-//           {/* Delete Account */}
-//           <div>
-//             {confirmDelete ? (
-//               <div className="flex flex-col space-y-2">
-//                 <div className="text-gray-700 text-sm">
-//                   Delete your account permanently?
-//                 </div>
-//                 <div className="flex space-x-2">
-//                   <button
-//                     onClick={handleDeleteAccount}
-//                     disabled={loading}
-//                     className="flex-1 bg-red-600 text-white py-2 rounded hover:bg-red-700 transition disabled:opacity-50"
-//                   >
-//                     {loading ? "Deleting..." : "Yes, Delete Account"}
-//                   </button>
-//                   <button
-//                     onClick={() => setConfirmDelete(false)}
-//                     className="flex-1 bg-gray-300 text-gray-700 py-2 rounded hover:bg-gray-400 transition"
-//                   >
-//                     Cancel
-//                   </button>
-//                 </div>
-//               </div>
-//             ) : (
-//               <button
-//                 onClick={() => setConfirmDelete(true)}
-//                 className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700 transition"
-//               >
-//                 Delete Account
-//               </button>
-//             )}
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
-// =========================================================================================================================================================================================================
-
-// import { useState, useEffect } from "react";
-// import { useNavigate } from "react-router-dom";
-// import { supabase } from "../supabaseClient";
-// import { FiArrowLeft, FiTrash2, FiXCircle, FiDatabase } from "react-icons/fi";
-
-// export default function AccountManagement() {
-//   const navigate = useNavigate();
-//   const [confirmDelete, setConfirmDelete] = useState(false);
-//   const [confirmClear, setConfirmClear] = useState(false);
-//   const [loading, setLoading] = useState(false);
-//   const [userId, setUserId] = useState(null);
-
-//   // Get current user
-//   useEffect(() => {
-//     const fetchUser = async () => {
-//       const { data, error } = await supabase.auth.getUser();
-//       if (error || !data.user) {
-//         navigate("/login");
-//       } else {
-//         setUserId(data.user.id);
-//       }
-//     };
-//     fetchUser();
-//   }, [navigate]);
-
-//   // Clear health profiles and meal logs
-//   const handleClearData = async () => {
-//     if (!userId) return;
-//     setLoading(true);
-//     try {
-//       await supabase.from("health_profiles").delete().eq("user_id", userId);
-//       await supabase.from("meal_logs").delete().eq("user_id", userId);
-//       alert("All your health profiles and meal logs have been cleared.");
-//       setConfirmClear(false);
-//     } catch (error) {
-//       console.error(error);
-//       alert("Failed to clear data. Make sure RLS policies allow deletion.");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   // Delete account
-//   const handleDeleteAccount = async () => {
-//     if (!userId) return;
-//     setLoading(true);
-//     try {
-//       const res = await fetch("/functions/v1/delete-user", {
-//         method: "POST",
-//         headers: { "Content-Type": "application/json" },
-//         body: JSON.stringify({ userId }),
-//       });
-//       const data = await res.json();
-//       if (res.ok && data.success) {
-//         alert("Your account and all data have been deleted.");
-//         await supabase.auth.signOut();
-//         navigate("/login");
-//       } else {
-//         throw new Error(data.error || "Failed to delete account.");
-//       }
-//     } catch (error) {
-//       console.error(error);
-//       alert("Failed to delete account.");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   return (
-//     <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-200 flex items-center justify-center px-4 py-6">
-//       <div className="bg-white w-[380px] h-[720px] rounded-3xl shadow-2xl overflow-auto flex flex-col border border-green-100">
-//         {/* Header */}
-//         <div className="bg-green-600 p-5 rounded-t-3xl text-white shadow-lg flex items-center justify-between">
-//           <button
-//             onClick={() => navigate("/settings")}
-//             className="text-white text-lg p-1 hover:bg-green-500 rounded transition"
-//           >
-//             <FiArrowLeft />
-//           </button>
-//           <div className="font-bold text-lg">Account Management</div>
-//           <div className="w-6"></div>
-//         </div>
-
-//         {/* Content */}
-//         <div className="p-5 flex-1 overflow-auto flex flex-col justify-start space-y-6">
-//           <div className="text-gray-700 text-sm">
-//             Manage your account: delete account or clear your health profile
-//             data and meal logs.
-//           </div>
-
-//           {/* Clear Data */}
-//           <div className="bg-green-50 p-4 rounded-xl shadow-sm">
-//             {confirmClear ? (
-//               <div className="flex flex-col space-y-3">
-//                 <div className="flex items-center gap-2 text-gray-700 text-sm">
-//                   <FiDatabase className="text-green-600" /> Clear all health profiles and meal logs?
-//                 </div>
-//                 <div className="flex space-x-2">
-//                   <button
-//                     onClick={handleClearData}
-//                     disabled={loading}
-//                     className="flex-1 bg-green-600 text-white py-2 rounded hover:bg-green-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
-//                   >
-//                     {loading ? "Clearing..." : <><FiDatabase /> Clear Data</>}
-//                   </button>
-//                   <button
-//                     onClick={() => setConfirmClear(false)}
-//                     className="flex-1 bg-gray-300 text-gray-700 py-2 rounded hover:bg-gray-400 transition flex items-center justify-center gap-2"
-//                   >
-//                     <FiXCircle /> Cancel
-//                   </button>
-//                 </div>
-//               </div>
-//             ) : (
-//               <button
-//                 onClick={() => setConfirmClear(true)}
-//                 className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition flex items-center justify-center gap-2"
-//               >
-//                 <FiDatabase /> Clear Health Profiles & Meal Logs
-//               </button>
-//             )}
-//           </div>
-
-//           {/* Delete Account */}
-//           <div className="bg-red-50 p-4 rounded-xl shadow-sm">
-//             {confirmDelete ? (
-//               <div className="flex flex-col space-y-3">
-//                 <div className="flex items-center gap-2 text-gray-700 text-sm">
-//                   <FiTrash2 className="text-red-600" /> Delete your account permanently?
-//                 </div>
-//                 <div className="flex space-x-2">
-//                   <button
-//                     onClick={handleDeleteAccount}
-//                     disabled={loading}
-//                     className="flex-1 bg-red-600 text-white py-2 rounded hover:bg-red-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
-//                   >
-//                     {loading ? "Deleting..." : <><FiTrash2 /> Delete Account</>}
-//                   </button>
-//                   <button
-//                     onClick={() => setConfirmDelete(false)}
-//                     className="flex-1 bg-gray-300 text-gray-700 py-2 rounded hover:bg-gray-400 transition flex items-center justify-center gap-2"
-//                   >
-//                     <FiXCircle /> Cancel
-//                   </button>
-//                 </div>
-//               </div>
-//             ) : (
-//               <button
-//                 onClick={() => setConfirmDelete(true)}
-//                 className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700 transition flex items-center justify-center gap-2"
-//               >
-//                 <FiTrash2 /> Delete Account
-//               </button>
-//             )}
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
-// =======================================================================================================================
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
@@ -425,6 +68,10 @@ export default function AccountManagement() {
         .from("meal_logs")
         .delete()
         .eq("user_id", userId);
+      const { error: e3 } = await supabase
+        .from("workouts")
+        .delete()
+        .eq("user_id", userId);
 
       if (e1 || e2) throw new Error("Failed to clear some data.");
 
@@ -454,10 +101,11 @@ export default function AccountManagement() {
       } = await supabase.auth.getSession();
 
       if (sessionError) throw sessionError;
-      if (!session) throw new Error("You must be logged in to delete your account.");
+      if (!session)
+        throw new Error("You must be logged in to delete your account.");
 
       console.log("Attempting to delete user with ID:", userId);
-      
+
       const response = await fetch(
         "https://exscmqdazkrtrfhstytk.supabase.co/functions/v1/delete-user",
         {
@@ -480,7 +128,7 @@ export default function AccountManagement() {
         // Successfully deleted account
         setShowDeleteModal(false);
         alert("✅ Your account has been successfully deleted.");
-        
+
         // Sign out and navigate to login
         await supabase.auth.signOut();
         navigate("/login");
@@ -489,7 +137,9 @@ export default function AccountManagement() {
       }
     } catch (error) {
       console.error("Error deleting account:", error);
-      setErrorText(error.message || "Failed to delete account. Please try again.");
+      setErrorText(
+        error.message || "Failed to delete account. Please try again."
+      );
       setShowErrorModal(true);
     } finally {
       setLoading(false);

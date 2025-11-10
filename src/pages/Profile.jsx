@@ -76,10 +76,10 @@ export default function PersonalDashboard() {
   );
 
   const NotebookCard = ({ title, children }) => (
-    <div className="m-3 p-5 bg-white rounded-2xl shadow-md border border-gray-100 hover:shadow-lg transition-all duration-300">
+    <div className="m-3 p-5 bg-white rounded-2xl shadow-md border hover:shadow-lg transition-all duration-300">
       {title && (
-        <h3 className="text-base font-semibold mb-3 text-green-700 flex items-center gap-2">
-          <span className="w-1.5 h-5 bg-green-500 rounded-full"></span>
+        <h3 className="text-base font-semibold mb-3 text-black flex items-center gap-2">
+          <span className="w-1.5 h-5 bg-lime-500 rounded-full"></span>
           {title}
         </h3>
       )}
@@ -96,12 +96,12 @@ export default function PersonalDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-100 flex flex-col items-center justify-center px-4 py-8">
       <div className="bg-white w-[375px] h-[667px] rounded-3xl shadow-2xl overflow-hidden relative flex flex-col border border-green-100">
         {/* Header */}
-        <div className="bg-green-600 w-full h-[60px] rounded-t-3xl flex items-center justify-between px-5 shadow-md">
+        <div className="bg-black w-full h-[60px]  rounded-t-3xl flex items-center justify-between px-5 shadow-md">
           <button
             onClick={() => navigate("/personaldashboard")}
             className="text-white text-sm flex items-center gap-1 hover:opacity-80 transition"
           >
-            <FiArrowLeft size={16} /> Back
+            <FiArrowLeft size={16} />
           </button>
 
           <div className="text-white font-semibold text-sm tracking-wide">
@@ -117,10 +117,10 @@ export default function PersonalDashboard() {
         </div>
 
         {/* Profile Header Card */}
-        <div className="flex flex-col items-center justify-center bg-gradient-to-r from-green-500 to-green-600 text-white py-6 relative">
-          <FaUserCircle className="text-white text-6xl mb-2 drop-shadow-lg" />
+        <div className="flex flex-col items-center justify-center bg-black/90 text-white py-6 relative">
+          <FaUserCircle className="text-white-500 text-6xl mb-2 drop-shadow-lg" />
           <h2 className="text-lg font-bold">{profile.full_name}</h2>
-          <p className="text-sm text-green-100">
+          <p className="text-sm text-white">
             {profile.gender} • {profile.age} years old
           </p>
         </div>

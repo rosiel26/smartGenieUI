@@ -16,10 +16,8 @@ export default function CreateProfile() {
   // --- Profile Data ---
   const [fullName, setFullName] = useState("");
   const [gender, setGender] = useState("");
-  const [birthMonth, setBirthMonth] = useState("");
-  const [birthDay, setBirthDay] = useState("");
-  const [birthYear, setBirthYear] = useState("");
   const [birthDate, setBirthDate] = useState("");
+  const [age, setAge] = useState(null);
 
   // --- Physical Info ---
   const [heightUnit, setHeightUnit] = useState("cm");
@@ -89,7 +87,6 @@ export default function CreateProfile() {
   const [healthConditions, setHealthConditions] = useState([]);
 
   // --- Calculated Health Data ---
-  const [age, setAge] = useState(null);
   const [bmi, setBmi] = useState(null);
   const [calorieNeeds, setCalorieNeeds] = useState(null);
   const [proteinNeeded, setProteinNeeded] = useState(null);
@@ -104,33 +101,13 @@ export default function CreateProfile() {
     "Very active",
   ]);
 
-  const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-  const years = Array.from(
-    { length: 100 },
-    (_, i) => `${new Date().getFullYear() - i}`
-  );
-
-  // --- Toggle Functions ---
+  // ----------------- Utility Functions -----------------
   const toggleItem = (item, array, setArray) => {
     if (array.includes(item)) setArray(array.filter((i) => i !== item));
     else setArray([...array, item]);
   };
   const toggleAllergen = (item) =>
     toggleItem(item, selectedAllergens, setSelectedAllergens);
-
   const selectAllInCategory = (categoryName) => {
     const category = allergenCategories.find((c) => c.name === categoryName);
     if (!category) return;
@@ -147,30 +124,12 @@ export default function CreateProfile() {
       ]);
   };
 
-  
-
-  // ----------------- Health Calculations -----------------
-  
-  const calculateAge = (year, month, day) => {
-    if (!year || !month || !day) return null;
-    const birthDate = new Date(
-      parseInt(year),
-      months.indexOf(month),
-      parseInt(day)
-    );
-    const today = new Date();
-    if (birthDate > today) return null;
-    let ageCalc = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) ageCalc--;
-    return ageCalc >= 15 ? ageCalc : null;
-  };
-
   const getHeightInCm = () =>
     heightUnit === "cm"
       ? parseFloat(heightCm) || 0
       : (parseFloat(heightFt) || 0) * 30.48 +
         (parseFloat(heightIn) || 0) * 2.54;
+
   const getWeightInKg = () =>
     weightUnit === "kg"
       ? parseFloat(weight) || 0
@@ -180,6 +139,7 @@ export default function CreateProfile() {
     gender === "male"
       ? 10 * weightKg + 6.25 * heightCm - 5 * age + 5
       : 10 * weightKg + 6.25 * heightCm - 5 * age - 161;
+
   const getActivityMultiplier = (level) =>
     ({
       Sedentary: 1.2,
@@ -221,8 +181,6 @@ export default function CreateProfile() {
           proteinPerc = 0.25;
           fatPerc = 0.3;
           carbPerc = 0.45;
-          break;
-        default:
           break;
       }
     });
@@ -270,14 +228,25 @@ export default function CreateProfile() {
     checkUser();
   }, [navigate]);
 
+  // ----------------- Compute Age -----------------
+  useEffect(() => {
+    if (!birthDate) {
+      setAge(null);
+      return;
+    }
+    const birth = new Date(birthDate);
+    const today = new Date();
+    let calculatedAge = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+      calculatedAge--;
+    }
+    setAge(calculatedAge);
+  }, [birthDate]);
+
   // ----------------- Compute Health Metrics -----------------
   useEffect(() => {
-    const userAge = calculateAge(birthYear, birthMonth, birthDay);
-    const heightCmValue = getHeightInCm();
-    const weightKgValue = getWeightInKg();
-
-    if (!userAge || heightCmValue <= 0 || weightKgValue <= 0) {
-      setAge(null);
+    if (!age) {
       setBmi(null);
       setCalorieNeeds(null);
       setProteinNeeded(null);
@@ -285,11 +254,14 @@ export default function CreateProfile() {
       setCarbsNeeded(null);
       return;
     }
-    setAge(userAge);
+    const heightCmValue = getHeightInCm();
+    const weightKgValue = getWeightInKg();
+    if (heightCmValue <= 0 || weightKgValue <= 0) return;
+
     const bmiValue = +(weightKgValue / (heightCmValue / 100) ** 2).toFixed(2);
     setBmi(bmiValue);
 
-    const bmr = calculateBMR(weightKgValue, heightCmValue, userAge, gender);
+    const bmr = calculateBMR(weightKgValue, heightCmValue, age, gender);
     const tdee = bmr * getActivityMultiplier(activityLevel);
     const macros = adjustMacros(goals, tdee);
 
@@ -298,9 +270,7 @@ export default function CreateProfile() {
     setFatsNeeded(macros.fat);
     setCarbsNeeded(macros.carbs);
   }, [
-    birthYear,
-    birthMonth,
-    birthDay,
+    age,
     heightCm,
     heightFt,
     heightIn,
@@ -319,17 +289,8 @@ export default function CreateProfile() {
         return fullName.trim() !== "";
       case 2:
         return gender !== "";
-      case 3: {
-        if (!birthDate) return false;
-        const birth = new Date(birthDate);
-        const today = new Date();
-        let age = today.getFullYear() - birth.getFullYear();
-        const m = today.getMonth() - birth.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
-          age--;
-        }
-        return age >= 18; // ✅ Only allow 18+
-      }
+      case 3:
+        return age !== null && age >= 18;
       case 8:
         return activityLevel !== "";
       case 9:
@@ -347,16 +308,11 @@ export default function CreateProfile() {
     }
   };
 
-  const handleBack = () => {
-    if (step > 1) setStep(step - 1);
-    else navigate(-1);
-  };
+  const handleBack = () => (step > 1 ? setStep(step - 1) : navigate(-1));
 
   const handleContinue = async () => {
     if (!isStepValid()) {
-      if (step === 3) {
-        alert("You must be at least 18 years old to continue.");
-      }
+      if (step === 3) alert("You must be at least 18 years old to continue.");
       return;
     }
 
@@ -365,7 +321,6 @@ export default function CreateProfile() {
       return;
     }
 
-    // ✅ Final data submission to Supabase
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -375,20 +330,11 @@ export default function CreateProfile() {
       return;
     }
 
-    const birthday =
-      birthDate ||
-      (birthYear && birthMonth && birthDay
-        ? `${birthYear}-${String(months.indexOf(birthMonth) + 1).padStart(
-            2,
-            "0"
-          )}-${String(birthDay).padStart(2, "0")}`
-        : null);
-
     const { data, error } = await supabase.from("health_profiles").insert([
       {
         user_id: user.id,
         full_name: fullName,
-        birthday,
+        birthday: birthDate,
         gender,
         height_cm: getHeightInCm(),
         weight_kg: getWeightInKg(),
@@ -408,12 +354,30 @@ export default function CreateProfile() {
       },
     ]);
 
-    if (error) {
-      console.error("❌ Error inserting profile:", error.message);
-    } else {
-      navigate("/personaldashboard");
-    }
+    if (error) console.error("❌ Error inserting profile:", error.message);
+    else navigate("/personaldashboard");
   };
+
+  if (loading)
+    return (
+      <div
+        className="flex flex-col items-center justify-center min-h-screen"
+        style={{
+          background:
+            "linear-gradient(to bottom right, #ECFDF5,#ECFDF5,#D1FAE5)",
+        }}
+      >
+        <div className="border-4 border-gray-200 border-t-emerald-600 rounded-full w-12 h-12 animate-spin"></div>
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="mt-4 px-4 py-2 bg-emerald-100 text-emerald-800 rounded-lg border border-emerald-200"
+        >
+          Checking Profile
+        </motion.div>
+      </div>
+    );
 
   if (loading)
     return (
@@ -554,34 +518,41 @@ export default function CreateProfile() {
                 />
 
                 {/* Age Preview */}
-                {birthDate && (() => {
-                  const birth = new Date(birthDate);
-                  const today = new Date();
-                  let age = today.getFullYear() - birth.getFullYear();
-                  const m = today.getMonth() - birth.getMonth();
-                  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
-                    age--;
-                  }
+                {birthDate &&
+                  (() => {
+                    const birth = new Date(birthDate);
+                    const today = new Date();
+                    let age = today.getFullYear() - birth.getFullYear();
+                    const m = today.getMonth() - birth.getMonth();
+                    if (
+                      m < 0 ||
+                      (m === 0 && today.getDate() < birth.getDate())
+                    ) {
+                      age--;
+                    }
 
-                  return (
-                    <p className="mt-4 text-sm text-gray-600">
-                      You are{" "}
-                      <span className={`font-semibold ${age < 18 ? "text-red-500" : "text-green-600"}`}>
-                        {age}
-                      </span>{" "}
-                      years old.
-                      {age < 18 && (
-                        <span className="block text-red-500 mt-1 font-medium">
-                          You must be at least 18 years old to continue.
-                        </span>
-                      )}
-                    </p>
-                  );
-                })()}
+                    return (
+                      <p className="mt-4 text-sm text-gray-600">
+                        You are{" "}
+                        <span
+                          className={`font-semibold ${
+                            age < 18 ? "text-red-500" : "text-green-600"
+                          }`}
+                        >
+                          {age}
+                        </span>{" "}
+                        years old.
+                        {age < 18 && (
+                          <span className="block text-red-500 mt-1 font-medium">
+                            You must be at least 18 years old to continue.
+                          </span>
+                        )}
+                      </p>
+                    );
+                  })()}
               </div>
             </div>
           )}
-
 
           {/* Step 4: Goal */}
           {step === 4 && (

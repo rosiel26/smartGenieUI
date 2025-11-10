@@ -696,7 +696,7 @@ const PersonalDashboard = React.memo(function PersonalDashboard() {
               onClick={() => navigate("/profile")}
             >
               <span className="font-semibold text-sm text-white">
-                Hi, {profile.full_name}, Welcome Back!
+                Hi, {profile.full_name},welcome back!
               </span>
               <span className="text-[12px] text-white/80 mt-1">
                 <strong>BMI:</strong> {profile.bmi}

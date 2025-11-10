@@ -206,9 +206,11 @@ export default function Journal() {
 
           <div className="grid grid-cols-2 gap-4 w-full max-w-4xl mx-auto">
             {/* Calories Consumed Half-Moon */}
+            {/* Calories Consumed Half-Moon (affected by meals & workouts) */}
+            {/* Calories Half-Moon with Congrats & Exceed */}
             <div className="bg-black p-4 rounded-xl shadow-lg flex flex-col items-center">
               <h3 className="text-white font-semibold mb-2 text-sm">
-                Calories Consumed
+                Calories
               </h3>
 
               <div className="relative w-40 h-20">
@@ -217,7 +219,7 @@ export default function Journal() {
                   <path
                     d="M 10 50 A 40 40 0 0 1 90 50"
                     fill="none"
-                    stroke="#374151" // Tailwind gray-700
+                    stroke="#374151"
                     strokeWidth="10"
                     strokeLinecap="round"
                   />
@@ -225,12 +227,16 @@ export default function Journal() {
                   <path
                     d="M 10 50 A 40 40 0 0 1 90 50"
                     fill="none"
-                    stroke="yellow" // Tailwind lime-500
+                    stroke="yellow"
                     strokeWidth="10"
                     strokeDasharray={125.6} // circumference of half circle
                     strokeDashoffset={
                       125.6 -
-                      (125.6 * (totalsMeals.calories ?? 0)) /
+                      (125.6 *
+                        Math.min(
+                          totalsMeals.calories + totalsWorkout.calories,
+                          profile?.calorie_needs ?? 1
+                        )) /
                         (profile?.calorie_needs ?? 1)
                     }
                     style={{ transition: "stroke-dashoffset 0.5s ease" }}
@@ -238,15 +244,33 @@ export default function Journal() {
                 </svg>
               </div>
 
-              {/* Consumed / Target below the half-moon */}
+              {/* Consumed / Target */}
               <div className="flex justify-between w-40 mt-1 text-white text-xs font-semibold px-2">
-                <span>{(totalsMeals.calories ?? 0).toFixed(0)}</span>
+                <span>
+                  {(totalsMeals.calories + totalsWorkout.calories).toFixed(0)}
+                </span>
                 <span>{(profile?.calorie_needs ?? 0).toFixed(0)}</span>
               </div>
-              <span className="font-semibold text-lime-500 text-center mt-2 text-xs">
-                {(totalsMeals.calories ?? 0).toFixed(0)} kcal consumed out of{" "}
-                {(profile?.calorie_needs ?? 0).toFixed(0)} kcal goal per day
-              </span>
+
+              {/* Status message */}
+              {totalsMeals.calories + totalsWorkout.calories >=
+              (profile?.calorie_needs ?? 0) ? (
+                <span className="font-semibold text-lime-500 text-center mt-2 text-xs">
+                  Congrats!{" "}
+                  {(
+                    totalsMeals.calories +
+                    totalsWorkout.calories -
+                    (profile?.calorie_needs ?? 0)
+                  ).toFixed(0)}{" "}
+                  kcal over for today!
+                </span>
+              ) : (
+                <span className="font-semibold text-lime-500 text-center mt-2 text-xs">
+                  {(totalsMeals.calories + totalsWorkout.calories).toFixed(0)}{" "}
+                  kcal counted toward {(profile?.calorie_needs ?? 0).toFixed(0)}{" "}
+                  kcal daily goal
+                </span>
+              )}
             </div>
 
             {/* Workout Summary Main Card */}

@@ -350,14 +350,17 @@ export default function Mealplan({ userId }) {
       <div className="bg-white w-[375px] h-[700px] rounded-3xl shadow-2xl overflow-hidden flex flex-col ">
         {/* Header */}
 
-        <div className="bg-black w-full h-[130px] rounded-t-3xl flex flex-col px-2 pt-2 relative">
+        <div className="bg-white w-full h-[130px] rounded-t-3xl flex flex-col px-2 pt-2 relative border-b-4  border-black">
           <div className="flex justify-between items-start mb-6">
             <div className="p-5 ">
-              <p className="text-m font-semibold text-white">
-                Hi <span className="text-green-500">{profile?.full_name},</span>{" "}
-                Good {timeOfDay}!
+              <p className="text-m font-semibold text-black">
+                Good {timeOfDay}{" "}
+                <span className="text-black font-bold">
+                  {" "}
+                  {profile?.full_name}!
+                </span>
               </p>
-              <p className="text-s font-medium flex items-center gap-2 text-white">
+              <p className="text-s font-medium flex items-center gap-2 text-black">
                 Here's your meal plan for today
               </p>
             </div>
@@ -367,7 +370,7 @@ export default function Mealplan({ userId }) {
         {/* SCROLLABLE CONTENT */}
         <div className=" p-4 flex-1 space-y-2 overflow-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {dateRange && (
-            <p className="text-sm font-medium mb-2">
+            <p className="text-sm font-medium mb-2 ">
               {dateRange.start} – {dateRange.end} ({profile.timeframe || 7}{" "}
               Days)
             </p>

@@ -250,10 +250,10 @@ export default function EditProfile() {
     }, {});
 
     return (
-      <div className="space-y-3">
+      <div className="space-y-2">
         {Object.keys(groupedOptions).map((category) => (
           <div key={category}>
-            <p className="text-sm font-semibold text-gray-500 mb-1">
+            <p className="text-xs font-semibold text-gray-500 mb-1">
               {category}
             </p>
             <div className="flex flex-wrap gap-2">
@@ -264,10 +264,10 @@ export default function EditProfile() {
                     key={value}
                     type="button"
                     onClick={() => handleMultiSelect(name, value)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
                       selected.includes(value)
-                        ? "bg-green-600 text-white border-green-600 shadow-sm"
-                        : "bg-white text-gray-700 border-gray-300 hover:bg-green-50"
+                        ? "bg-lime-500 text-black shadow-sm"
+                        : "bg-black text-white hover:bg-green-50"
                     }`}
                   >
                     {value}
@@ -285,27 +285,28 @@ export default function EditProfile() {
     <div className="min-h-screen bg-gradient-to-br from-green-100 via-white to-green-200 flex justify-center items-center px-4 py-8">
       <form
         onSubmit={handleSave}
-        className="bg-white w-[375px] rounded-3xl shadow-2xl overflow-hidden flex flex-col border border-green-100"
+        className="bg-white w-[375px]  h-[700px] rounded-3xl shadow-2xl overflow-hidden flex flex-col border border-green-100"
       >
-        <div className="bg-green-600 h-[60px] flex items-center justify-between px-5 rounded-t-3xl shadow-md">
-          <button
-            type="button"
-            onClick={() => navigate("/personaldashboard")}
-            className="flex items-center gap-1 text-white hover:opacity-80 transition"
-          >
-            <FiArrowLeft />
-          </button>
-          <div className="flex items-center gap-2 text-white font-semibold">
-            Edit Profile
+        <div className="bg-black w-full h-[130px] rounded-t-3xl flex flex-col px-2 pt-2 relative">
+          <div className="bg-black h-[60px] flex items-center justify-between px-5 rounded-t-3xl shadow-md">
+            <button
+              type="button"
+              onClick={() => navigate("/personaldashboard")}
+              className="flex items-center gap-1 text-white hover:opacity-80 transition"
+            >
+              <FiArrowLeft />
+            </button>
+            <div className="flex items-center gap-2 text-white font-semibold">
+              Edit Profile
+            </div>
+            <button
+              type="submit"
+              className="flex items-center gap-1 text-white hover:opacity-80 transition"
+            >
+              <FiSave /> Save
+            </button>
           </div>
-          <button
-            type="submit"
-            className="flex items-center gap-1 text-white hover:opacity-80 transition"
-          >
-            <FiSave /> Save
-          </button>
         </div>
-
         <div className="p-6 space-y-5 overflow-y-auto hide-scrollbar bg-gradient-to-b from-white to-green-50">
           <InputField
             label="Full Name"
@@ -367,7 +368,7 @@ export default function EditProfile() {
             value={profile.eating_style}
             options={eatingStyleOptions}
           />
-          <div>
+          <div className="border rounded-2xl p-2">
             <label className="block text-sm font-semibold text-gray-700 mb-1">
               Allergens
             </label>
@@ -379,7 +380,7 @@ export default function EditProfile() {
             />
           </div>
 
-          <div>
+          <div className="border rounded-lg p-2">
             <label className="block text-sm font-semibold text-gray-700 mb-1">
               Health Conditions
             </label>
@@ -392,10 +393,9 @@ export default function EditProfile() {
           </div>
 
           {bmi && (
-            <div className="mt-5 p-3 border rounded-xl bg-green-50">
-              <p className="text-sm font-medium text-green-700">
-                Current BMI:{" "}
-                <span className="font-bold text-green-800">{bmi}</span>
+            <div className="mt-5 p-3 border rounded-xl bg-black">
+              <p className="text-sm font-medium text-white">
+                Current BMI: <span className="font-bold text-white">{bmi}</span>
               </p>
             </div>
           )}

@@ -71,18 +71,34 @@ export default function MyStatusDisplay({
           </svg>
 
           {/* Center text */}
+          {/* Center text */}
           <div className="absolute inset-0 flex flex-col justify-center items-center mt-1">
-            <span className="text-xl font-bold text-lime-600">
-              {progressPercent}%
-            </span>
-            <span className="text-gray-600 text-[10px]">
-              {remainingTotals.calories > 0
-                ? `${remainingTotals.calories} kcal left`
-                : `+${Math.abs(remainingTotals.calories)} kcal`}
-            </span>
-            <span className="text-gray-400 text-[10px]">
-              of {totalCalories} kcal goal
-            </span>
+            {progressPercent >= 100 ? (
+              remainingTotals.calories >= 0 ? (
+                <span className="text-lg font-bold text-lime-600 text-center">
+                  🎉 Congrats! <br /> You’ve completed your goal
+                </span>
+              ) : (
+                <span className="text-lg font-bold text-red-500 text-center">
+                  ⚠️ You’ve exceeded by {Math.abs(remainingTotals.calories)}{" "}
+                  kcal
+                </span>
+              )
+            ) : (
+              <>
+                <span className="text-xl font-bold text-lime-600">
+                  {progressPercent}%
+                </span>
+                <span className="text-gray-600 text-[10px]">
+                  {remainingTotals.calories > 0
+                    ? `${remainingTotals.calories} kcal left`
+                    : `+${Math.abs(remainingTotals.calories)} kcal`}
+                </span>
+                <span className="text-gray-400 text-[10px]">
+                  of {totalCalories} kcal goal
+                </span>
+              </>
+            )}
           </div>
 
           {/* Current / Target summary */}
