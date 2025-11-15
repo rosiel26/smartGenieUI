@@ -351,7 +351,7 @@ export default function Mealplan({ userId }) {
         </div>
 
         {/* Scrollable Content */}
-        <div className="p-4 flex-1 space-y-2 overflow-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden overflow-visible">
+        <div className="p-4 flex-1 space-y-2 overflow-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {dateRange && (
             <p className="text-sm font-medium mb-2">
               {dateRange.start} – {dateRange.end} ({profile.timeframe || 7}{" "}
