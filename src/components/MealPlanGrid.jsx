@@ -38,9 +38,6 @@ export default function MealPlanGrid({ weeklyPlan, mealTypes, onOpenDish }) {
 
   return (
     <div className="pt-2">
-      {/* Filters */}
-
-      {/* Horizontal scroll wrapper */}
       <div className={filterDays === "3" ? "w-full" : "overflow-x-auto"}>
         <table
           className={`table-auto border-collapse text-sm ${
@@ -101,14 +98,34 @@ export default function MealPlanGrid({ weeklyPlan, mealTypes, onOpenDish }) {
                   const { calories, protein, carbs, fats } =
                     computeMacros(meal);
 
+                  // ✅ Only "added" meals are unclickable
+                  const isClickable = meal.status !== "added";
+
+                  let statusStyles = "";
+                  if (meal.status === "added") {
+                    statusStyles =
+                      "bg-green-50 border-green-200 opacity-60 cursor-not-allowed";
+                  } else if (meal.status === "missed") {
+                    // Missed meals are clickable
+                    statusStyles =
+                      "bg-red-50 border-red-200 cursor-pointer hover:bg-red-100";
+                  } else {
+                    statusStyles = "cursor-pointer hover:bg-green-50";
+                  }
+
                   return (
                     <td
                       key={idx}
-                      className="border px-2 py-1 cursor-pointer hover:bg-green-50"
-                      onClick={() =>
-                        meal.status !== "added" && onOpenDish(meal)
-                      }
+                      className={`border px-2 py-1 relative ${statusStyles}`}
+                      onClick={() => isClickable && onOpenDish(meal, day.date)}
                     >
+                      {meal.status === "missed" && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-10">
+                          <span className="text-red-500 font-bold text-xs">
+                            Missed
+                          </span>
+                        </div>
+                      )}
                       <div className="flex flex-col items-center gap-1 text-center">
                         {meal.image_url ? (
                           <img

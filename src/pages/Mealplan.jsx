@@ -18,6 +18,7 @@ import {
   computeDishTotalsWithIngredientOverrides,
   formatDateRange,
 } from "../utils/mealplan";
+import { FaInfoCircle } from "react-icons/fa";
 
 export default function Mealplan({ userId }) {
   const [profile, setProfile] = useState(null);
@@ -53,10 +54,10 @@ export default function Mealplan({ userId }) {
           .eq("user_id", user.id)
           .single(),
         supabase.from("dishes").select(`
-        id, name, description, default_serving, meal_type, goal,
-        eating_style, health_condition, steps, image_url,
-        ingredients_dish_id_fkey(id, name, amount, unit, calories, protein, fats, carbs, is_rice)
-      `),
+          id, name, description, default_serving, meal_type, goal,
+          eating_style, health_condition, steps, image_url,
+          ingredients_dish_id_fkey(id, name, amount, unit, calories, protein, fats, carbs, is_rice)
+        `),
         supabase.from("meal_logs").select("*").eq("user_id", user.id),
       ]);
 
@@ -78,22 +79,13 @@ export default function Mealplan({ userId }) {
       let plan = null;
       let shouldRegeneratePlan = false;
 
-      // 1️⃣ Try loading plan from database first
+      // 1️⃣ Try loading plan from localStorage first
       if (profileData.plan_start_date && profileData.plan_end_date) {
         const savedPlanRaw = localStorage.getItem(`weeklyPlan_${user.id}`);
         if (savedPlanRaw) {
           plan = JSON.parse(savedPlanRaw);
 
-          // Check if the existing plan is outdated or timeframe has changed
-          console.log("Debug: profileData before date parsing:", profileData);
-          console.log(
-            "Debug: profileData.plan_start_date:",
-            profileData.plan_start_date
-          );
-          console.log(
-            "Debug: profileData.plan_end_date:",
-            profileData.plan_end_date
-          );
+          // Check if existing plan is outdated
           const planStartDate = new Date(profileData.plan_start_date);
           const planEndDate = new Date(profileData.plan_end_date);
           const today = new Date();
@@ -105,54 +97,47 @@ export default function Mealplan({ userId }) {
             1;
 
           if (planEndDate < today || planDuration !== profileData.timeframe) {
-            console.log(
-              "Existing plan is outdated or timeframe changed. Regenerating plan."
-            );
+            console.log("Existing plan outdated. Regenerating...");
             shouldRegeneratePlan = true;
-            plan = null; // Invalidate the old plan
+            plan = null;
           }
         } else {
-          // If no plan in localStorage, but dates in DB, assume plan needs to be fetched or regenerated
-          // For now, let's assume if not in localStorage, it needs regeneration to simplify
           shouldRegeneratePlan = true;
         }
       } else {
-        // No plan dates in DB, definitely regenerate
         shouldRegeneratePlan = true;
       }
 
-      // 2️⃣ Only generate a new plan if no plan exists or if regeneration is forced
+      // 2️⃣ Generate new plan if needed
       if (!plan || shouldRegeneratePlan) {
         plan = createSmartWeeklyMealPlan(profileData, dishesData);
 
         // Save to localStorage
         localStorage.setItem(`weeklyPlan_${user.id}`, JSON.stringify(plan));
 
-        // Save start/end date in DB
-        console.log("Attempting to update health_profiles with:");
-        console.log("plan_start_date:", plan.start_date);
-        console.log("plan_end_date:", plan.end_date);
-        console.log("user_id:", user.id);
-        await supabase
+        // Convert dates to ISO strings for Supabase
+        const planStartISO = new Date(plan.start_date).toISOString();
+        const planEndISO = new Date(plan.end_date).toISOString();
+        const safePlanJSON = JSON.parse(JSON.stringify(plan)); // Remove any Date or undefined
+
+        // Update health_profiles safely
+        const { error: updateError } = await supabase
           .from("health_profiles")
           .update({
-            plan_start_date: plan.start_date,
-            plan_end_date: plan.end_date,
+            plan_start_date: planStartISO,
+            plan_end_date: planEndISO,
+            weekly_plan_json: safePlanJSON,
           })
           .eq("user_id", user.id);
 
-        // Optional: save plan JSON to DB too
-        await supabase
-          .from("health_profiles")
-          .update({ weekly_plan_json: plan })
-          .eq("user_id", user.id);
+        if (updateError) console.error("Supabase update error:", updateError);
       }
 
-      // -------- Mark added meals --------
+      // Mark added meals
       const updatedPlan = markAddedMeals(plan, mealData);
       setWeeklyPlan(updatedPlan);
 
-      // Persist updated plan
+      // Persist updated plan in localStorage
       localStorage.setItem(
         `weeklyPlan_${user.id}`,
         JSON.stringify(updatedPlan)
@@ -204,12 +189,13 @@ export default function Mealplan({ userId }) {
   }, [selectedDish, selectedCityId, storeTypeFilters]);
 
   // -------------------- HANDLERS --------------------
-  const handleOpenDish = (dish) => {
+  const handleOpenDish = (dish, date) => {
     const full = dishes.find((d) => d.id === dish.id) || dish;
     const prepared = prepareDishForModal(full);
     if (dish && dish.type) prepared.planMealType = dish.type;
     else if (dish && dish.meal_type) prepared.planMealType = dish.meal_type;
-    if (dish && dish.status) prepared.status = dish.status; // Pass the status
+    if (dish && dish.status) prepared.status = dish.status;
+    if (date) prepared.meal_date = date;
     setSelectedDish(prepared);
   };
 
@@ -242,7 +228,7 @@ export default function Mealplan({ userId }) {
     mealType,
     adjustedTotals,
     servingSize,
-    mealDate = null
+    mealDate = null // The scheduled date from the plan
   ) => {
     try {
       const {
@@ -254,7 +240,8 @@ export default function Mealplan({ userId }) {
         return;
       }
 
-      const today = mealDate || new Date().toISOString().split("T")[0];
+      // Log the meal on the current date
+      const logDate = new Date().toISOString().split("T")[0];
 
       const riceIngredient = (meal.ingredients_dish_id_fkey || []).find(
         (ing) => ing.is_rice
@@ -268,7 +255,7 @@ export default function Mealplan({ userId }) {
         user_id: user.id,
         dish_id: parseInt(meal.id),
         dish_name: dishName,
-        meal_date: today,
+        meal_date: logDate, // Use current date for the log
         calories: adjustedTotals.calories,
         protein: adjustedTotals.protein,
         carbs: adjustedTotals.carbs,
@@ -281,16 +268,16 @@ export default function Mealplan({ userId }) {
       const { error } = await supabase.from("meal_logs").insert([mealLogData]);
       if (error) throw error;
 
-      // Update meal log state
       setMealLog((prev) => [...(prev || []), mealLogData]);
 
-      // ✅ Update weeklyPlan state to mark this meal as "added"
+      // Mark the original scheduled meal in the plan as 'added'
       setWeeklyPlan((prev) => {
         const newPlan = {
           ...prev,
           plan: prev.plan.map((day) => {
             const dayCopy = { ...day };
-            if (dayCopy.date === today) {
+            // Use the scheduled date to find the correct day in the plan
+            if (dayCopy.date === mealDate) {
               dayCopy.meals = dayCopy.meals.map((m) =>
                 Number(m.id) === Number(meal.id) &&
                 m.type === (meal.planMealType || meal.type)
@@ -301,16 +288,14 @@ export default function Mealplan({ userId }) {
             return dayCopy;
           }),
         };
-
-        // Update localStorage too
         localStorage.setItem(`weeklyPlan_${user.id}`, JSON.stringify(newPlan));
         return newPlan;
       });
 
       setSelectedDish(null);
       setAlertMessage(
-        mealDate && mealDate !== new Date().toISOString().split("T")[0]
-          ? "Meal added retroactively!"
+        mealDate && mealDate !== logDate
+          ? "Missed meal added for today!"
           : "Meal added successfully!"
       );
       setShowAlertModal(true);
@@ -347,16 +332,14 @@ export default function Mealplan({ userId }) {
   // -------------------- MAIN RENDER --------------------
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-100 flex justify-center items-center p-4">
-      <div className="bg-white w-[375px] h-[700px] rounded-3xl shadow-2xl overflow-hidden flex flex-col ">
+      <div className="bg-white w-[375px] h-[700px] rounded-3xl shadow-2xl overflow-hidden flex flex-col">
         {/* Header */}
-
-        <div className="bg-white w-full h-[130px] rounded-t-3xl flex flex-col px-2 pt-2 relative border-b-4  border-black">
+        <div className="bg-white w-full h-[130px] rounded-t-3xl flex flex-col px-2 pt-2 relative border-b-4 border-black">
           <div className="flex justify-between items-start mb-6">
-            <div className="p-5 ">
+            <div className="p-5">
               <p className="text-m font-semibold text-black">
                 Good {timeOfDay}{" "}
                 <span className="text-black font-bold">
-                  {" "}
                   {profile?.full_name}!
                 </span>
               </p>
@@ -367,12 +350,24 @@ export default function Mealplan({ userId }) {
           </div>
         </div>
 
-        {/* SCROLLABLE CONTENT */}
-        <div className=" p-4 flex-1 space-y-2 overflow-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        {/* Scrollable Content */}
+        <div className="p-4 flex-1 space-y-2 overflow-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden overflow-visible">
           {dateRange && (
-            <p className="text-sm font-medium mb-2 ">
+            <p className="text-sm font-medium mb-2">
               {dateRange.start} – {dateRange.end} ({profile.timeframe || 7}{" "}
               Days)
+              <span className="relative inline-flex ml-1 group">
+                <FaInfoCircle className="text-red-700 cursor-pointer" />
+                <span
+                  className="absolute left-full top-1/2 ml-2 max-w-xs
+                   bg-green-600 text-white text-xs rounded px-2 py-1
+                   opacity-0 group-hover:opacity-100 transition-opacity z-10
+                   break-words text-left"
+                >
+                  Once you update your health profile, the generation of meals
+                  and dishes will adjust accordingly.
+                </span>
+              </span>
             </p>
           )}
 
@@ -411,7 +406,8 @@ export default function Mealplan({ userId }) {
             />
           )}
         </div>
-        {/* FOOTER */}
+
+        {/* Footer */}
         <FooterNav />
       </div>
     </div>

@@ -76,38 +76,44 @@
     };
   };
 
-  export const markAddedMeals = (plan = [], mealLog = []) => {
-    if (!Array.isArray(plan) || !Array.isArray(mealLog)) return plan || [];
+  export const markAddedMeals = (planObject, mealLog = []) => {
+  if (!planObject?.plan || !Array.isArray(planObject.plan)) {
+    return planObject || { plan: [], start_date: null, end_date: null };
+  }
+  if (!Array.isArray(mealLog)) {
+    mealLog = [];
+  }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Normalize to start of day
-    const localDate = today.toISOString().split("T")[0];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const localDate = today.toISOString().split("T")[0];
 
-    return (plan || []).map((day) => {
-      const meals = (day.meals || []).map((meal) => {
-        const idNum = Number(meal?.id);
-        const mealScheduledDate = day.date; // The date this meal was scheduled for
+  const updatedPlanArray = planObject.plan.map((day) => {
+    const meals = (day.meals || []).map((meal) => {
+      const idNum = Number(meal?.id);
+      const mealScheduledDate = day.date;
 
-        const isAdded = (mealLog || []).some(
-          (m) =>
-            Number(m.dish_id) === idNum &&
-            m.meal_type === meal.type &&
-            m.meal_date === mealScheduledDate
-        );
+      const isAdded = mealLog.some(
+        (m) =>
+          Number(m.dish_id) === idNum &&
+          m.meal_type === meal.type &&
+          m.meal_date === mealScheduledDate
+      );
 
-        let status = "pending";
-        if (isAdded) {
-          status = "added";
-        } else if (mealScheduledDate < localDate) {
-          // If the meal was scheduled for a past day and not added
-          status = "missed";
-        }
+      let status = "pending";
+      if (isAdded) {
+        status = "added";
+      } else if (new Date(mealScheduledDate) < today) {
+        status = "missed";
+      }
 
-        return { ...(meal || {}), status: status };
-      });
-      return { ...day, meals };
+      return { ...(meal || {}), status, meal_date: mealScheduledDate };
     });
-  };
+    return { ...day, meals };
+  });
+
+  return { ...planObject, plan: updatedPlanArray };
+};
 
   export const prepareDishForModal = (dish) => {
     // Determine whether ingredient.amount values are stored per 100g of dish
@@ -221,6 +227,9 @@
 
     return {
       ...dish,
+      name: dish.name,
+      description: dish.description,
+      image_url: dish.image_url,
       servingSize,
       default_serving: defaultServing,
       amountBaseUnit,

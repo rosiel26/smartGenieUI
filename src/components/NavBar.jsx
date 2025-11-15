@@ -30,13 +30,13 @@ const Navbar = () => {
   }
 
   return (
-    <nav className="bg-white shadow-md px-6 py-4 flex justify-between items-center fixed w-full z-50">
+    <nav className="bg-black shadow-md px-6 py-4 flex justify-between items-center fixed w-full z-50">
       {/* Logo */}
       <div
-        className="text-2xl font-bold text-green-600 cursor-pointer"
+        className="text-2xl font-bold text-white cursor-pointer"
         onClick={() => navigate(session ? "/personaldashboard" : "/")}
       >
-        SmartGenie
+        Smart<span className="text-lime-500">Genie </span>.
       </div>
 
       {/* Desktop */}
@@ -45,13 +45,13 @@ const Navbar = () => {
           <>
             <button
               onClick={() => navigate("/login")}
-              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+              className="px-4 py-2 bg-lime-500 text-black rounded hover:bg-lime-700 transition hover:text-white border-2 border-lime-500"
             >
               Login
             </button>
             <button
               onClick={() => navigate("/signup")}
-              className="px-4 py-2 border border-green-600 text-green-600 rounded hover:bg-green-50 transition"
+              className="px-4 py-2 border-2 border-lime-500 text-white rounded hover:bg-white hover:text-black transition "
             >
               Sign Up
             </button>

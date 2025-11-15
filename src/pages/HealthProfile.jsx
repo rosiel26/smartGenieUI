@@ -13,33 +13,34 @@ export default function CreateProfile() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // --- Profile Data ---
-  const [fullName, setFullName] = useState("");
-  const [gender, setGender] = useState("");
-  const [birthDate, setBirthDate] = useState("");
-  const [age, setAge] = useState(null);
+  const [formData, setFormData] = useState({
+    fullName: "",
+    gender: "",
+    birthDate: "",
+    age: null,
+    heightUnit: "cm",
+    heightCm: "",
+    heightFt: "",
+    heightIn: "",
+    weightUnit: "kg",
+    weight: "",
+    activityLevel: "",
+    mealsPerDay: 3,
+    goalDays: 30,
+    goals: [],
+    selectedStyle: "",
+    selectedAllergens: [],
+    healthConditions: [],
+    bmi: null,
+    calorieNeeds: null,
+    proteinNeeded: null,
+    fatsNeeded: null,
+    carbsNeeded: null,
+  });
 
-  // --- Physical Info ---
-  const [heightUnit, setHeightUnit] = useState("cm");
-  const [heightCm, setHeightCm] = useState("");
-  const [heightFt, setHeightFt] = useState("");
-  const [heightIn, setHeightIn] = useState("");
-  const [weightUnit, setWeightUnit] = useState("kg");
-  const [weight, setWeight] = useState("");
-
-  // --- Activity & Goals ---
-  const [activityLevel, setActivityLevel] = useState("");
-  const [mealsPerDay, setMealsPerDay] = useState(3);
-  const [goalDays, setGoalDays] = useState(30);
-  const [goals, setGoals] = useState([]);
-  const [goalOptions] = useState([
-    "Weight loss",
-    "Improve physical health",
-    "Boost energy",
-    "Managing stress",
-    "Optimized athletic performance",
-    "Eating a balanced diet",
-  ]);
+  const handleInputChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
   // --- Eating Preferences ---
   const [eatingStyles] = useState([
@@ -64,7 +65,6 @@ export default function CreateProfile() {
       breakdown: "Protein: 40%, Fat: 30%, Carbs: 30%",
     },
   ]);
-  const [selectedStyle, setSelectedStyle] = useState("");
 
   // --- Allergens ---
   const [allergenCategories] = useState([
@@ -75,7 +75,6 @@ export default function CreateProfile() {
     },
     { name: "Dairy", items: ["Milk", "Cheese", "Butter", "Yogurt"] },
   ]);
-  const [selectedAllergens, setSelectedAllergens] = useState([]);
 
   // --- Health Conditions ---
   const [healthOptions] = useState([
@@ -84,14 +83,6 @@ export default function CreateProfile() {
     "Heart disease",
     "Kidney Disease",
   ]);
-  const [healthConditions, setHealthConditions] = useState([]);
-
-  // --- Calculated Health Data ---
-  const [bmi, setBmi] = useState(null);
-  const [calorieNeeds, setCalorieNeeds] = useState(null);
-  const [proteinNeeded, setProteinNeeded] = useState(null);
-  const [fatsNeeded, setFatsNeeded] = useState(null);
-  const [carbsNeeded, setCarbsNeeded] = useState(null);
 
   // --- Activity Options ---
   const [activityOptions] = useState([
@@ -101,39 +92,54 @@ export default function CreateProfile() {
     "Very active",
   ]);
 
+  const [goalOptions] = useState([
+    "Weight loss",
+    "Improve physical health",
+    "Boost energy",
+    "Managing stress",
+    "Optimized athletic performance",
+    "Eating a balanced diet",
+  ]);
+
   // ----------------- Utility Functions -----------------
-  const toggleItem = (item, array, setArray) => {
-    if (array.includes(item)) setArray(array.filter((i) => i !== item));
-    else setArray([...array, item]);
+  const toggleArrayItem = (field, item) => {
+    const currentArray = formData[field];
+    const newArray = currentArray.includes(item)
+      ? currentArray.filter((i) => i !== item)
+      : [...currentArray, item];
+    handleInputChange(field, newArray);
   };
-  const toggleAllergen = (item) =>
-    toggleItem(item, selectedAllergens, setSelectedAllergens);
+
+  const toggleAllergen = (item) => toggleArrayItem("selectedAllergens", item);
+  
   const selectAllInCategory = (categoryName) => {
     const category = allergenCategories.find((c) => c.name === categoryName);
     if (!category) return;
     const allSelected = category.items.every((i) =>
-      selectedAllergens.includes(i)
+      formData.selectedAllergens.includes(i)
     );
-    if (allSelected)
-      setSelectedAllergens((prev) =>
-        prev.filter((i) => !category.items.includes(i))
+    if (allSelected) {
+      handleInputChange(
+        "selectedAllergens",
+        formData.selectedAllergens.filter((i) => !category.items.includes(i))
       );
-    else
-      setSelectedAllergens((prev) => [
-        ...new Set([...prev, ...category.items]),
+    } else {
+      handleInputChange("selectedAllergens", [
+        ...new Set([...formData.selectedAllergens, ...category.items]),
       ]);
+    }
   };
 
   const getHeightInCm = () =>
-    heightUnit === "cm"
-      ? parseFloat(heightCm) || 0
-      : (parseFloat(heightFt) || 0) * 30.48 +
-        (parseFloat(heightIn) || 0) * 2.54;
+    formData.heightUnit === "cm"
+      ? parseFloat(formData.heightCm) || 0
+      : (parseFloat(formData.heightFt) || 0) * 30.48 +
+        (parseFloat(formData.heightIn) || 0) * 2.54;
 
   const getWeightInKg = () =>
-    weightUnit === "kg"
-      ? parseFloat(weight) || 0
-      : (parseFloat(weight) || 0) / 2.20462;
+    formData.weightUnit === "kg"
+      ? parseFloat(formData.weight) || 0
+      : (parseFloat(formData.weight) || 0) / 2.20462;
 
   const calculateBMR = (weightKg, heightCm, age, gender) =>
     gender === "male"
@@ -230,28 +236,28 @@ export default function CreateProfile() {
 
   // ----------------- Compute Age -----------------
   useEffect(() => {
-    if (!birthDate) {
-      setAge(null);
+    if (!formData.birthDate) {
+      handleInputChange("age", null);
       return;
     }
-    const birth = new Date(birthDate);
+    const birth = new Date(formData.birthDate);
     const today = new Date();
     let calculatedAge = today.getFullYear() - birth.getFullYear();
     const m = today.getMonth() - birth.getMonth();
     if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
       calculatedAge--;
     }
-    setAge(calculatedAge);
-  }, [birthDate]);
+    handleInputChange("age", calculatedAge);
+  }, [formData.birthDate]);
 
   // ----------------- Compute Health Metrics -----------------
   useEffect(() => {
-    if (!age) {
-      setBmi(null);
-      setCalorieNeeds(null);
-      setProteinNeeded(null);
-      setFatsNeeded(null);
-      setCarbsNeeded(null);
+    if (!formData.age) {
+      handleInputChange("bmi", null);
+      handleInputChange("calorieNeeds", null);
+      handleInputChange("proteinNeeded", null);
+      handleInputChange("fatsNeeded", null);
+      handleInputChange("carbsNeeded", null);
       return;
     }
     const heightCmValue = getHeightInCm();
@@ -259,50 +265,55 @@ export default function CreateProfile() {
     if (heightCmValue <= 0 || weightKgValue <= 0) return;
 
     const bmiValue = +(weightKgValue / (heightCmValue / 100) ** 2).toFixed(2);
-    setBmi(bmiValue);
+    handleInputChange("bmi", bmiValue);
 
-    const bmr = calculateBMR(weightKgValue, heightCmValue, age, gender);
-    const tdee = bmr * getActivityMultiplier(activityLevel);
-    const macros = adjustMacros(goals, tdee);
+    const bmr = calculateBMR(
+      weightKgValue,
+      heightCmValue,
+      formData.age,
+      formData.gender
+    );
+    const tdee = bmr * getActivityMultiplier(formData.activityLevel);
+    const macros = adjustMacros(formData.goals, tdee);
 
-    setCalorieNeeds(macros.calories);
-    setProteinNeeded(macros.protein);
-    setFatsNeeded(macros.fat);
-    setCarbsNeeded(macros.carbs);
+    handleInputChange("calorieNeeds", macros.calories);
+    handleInputChange("proteinNeeded", macros.protein);
+    handleInputChange("fatsNeeded", macros.fat);
+    handleInputChange("carbsNeeded", macros.carbs);
   }, [
-    age,
-    heightCm,
-    heightFt,
-    heightIn,
-    heightUnit,
-    weight,
-    weightUnit,
-    gender,
-    activityLevel,
-    goals,
+    formData.age,
+    formData.heightCm,
+    formData.heightFt,
+    formData.heightIn,
+    formData.heightUnit,
+    formData.weight,
+    formData.weightUnit,
+    formData.gender,
+    formData.activityLevel,
+    formData.goals,
   ]);
 
   // ----------------- Step Validation -----------------
   const isStepValid = () => {
     switch (step) {
       case 1:
-        return fullName.trim() !== "";
+        return formData.fullName.trim() !== "";
       case 2:
-        return gender !== "";
+        return formData.gender !== "";
       case 3:
-        return age !== null && age >= 18;
+        return formData.age !== null && formData.age >= 18;
       case 8:
-        return activityLevel !== "";
+        return formData.activityLevel !== "";
       case 9:
-        return heightUnit === "cm"
-          ? heightCm.trim() !== ""
-          : heightFt.trim() !== "" && heightIn.trim() !== "";
+        return formData.heightUnit === "cm"
+          ? formData.heightCm.trim() !== ""
+          : formData.heightFt.trim() !== "" && formData.heightIn.trim() !== "";
       case 10:
-        return weight.trim() !== "";
+        return formData.weight.trim() !== "";
       case 11:
-        return mealsPerDay !== "";
+        return formData.mealsPerDay !== "";
       case 12:
-        return goalDays !== "";
+        return formData.goalDays !== "";
       default:
         return true;
     }
@@ -333,51 +344,30 @@ export default function CreateProfile() {
     const { data, error } = await supabase.from("health_profiles").insert([
       {
         user_id: user.id,
-        full_name: fullName,
-        birthday: birthDate,
-        gender,
+        full_name: formData.fullName,
+        birthday: formData.birthDate,
+        gender: formData.gender,
         height_cm: getHeightInCm(),
         weight_kg: getWeightInKg(),
-        activity_level: activityLevel,
-        goal: goals.join(", "),
-        eating_style: selectedStyle,
-        meals_per_day: mealsPerDay,
-        allergens: selectedAllergens,
-        health_conditions: healthConditions,
-        age,
-        bmi,
-        calorie_needs: calorieNeeds,
-        protein_needed: proteinNeeded,
-        fats_needed: fatsNeeded,
-        carbs_needed: carbsNeeded,
-        timeframe: goalDays,
+        activity_level: formData.activityLevel,
+        goal: formData.goals.join(", "),
+        eating_style: formData.selectedStyle,
+        meals_per_day: formData.mealsPerDay,
+        allergens: formData.selectedAllergens,
+        health_conditions: formData.healthConditions,
+        age: formData.age,
+        bmi: formData.bmi,
+        calorie_needs: formData.calorieNeeds,
+        protein_needed: formData.proteinNeeded,
+        fats_needed: formData.fatsNeeded,
+        carbs_needed: formData.carbsNeeded,
+        timeframe: formData.goalDays,
       },
     ]);
 
     if (error) console.error("❌ Error inserting profile:", error.message);
     else navigate("/personaldashboard");
   };
-
-  if (loading)
-    return (
-      <div
-        className="flex flex-col items-center justify-center min-h-screen"
-        style={{
-          background:
-            "linear-gradient(to bottom right, #ECFDF5,#ECFDF5,#D1FAE5)",
-        }}
-      >
-        <div className="border-4 border-gray-200 border-t-emerald-600 rounded-full w-12 h-12 animate-spin"></div>
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="mt-4 px-4 py-2 bg-emerald-100 text-emerald-800 rounded-lg border border-emerald-200"
-        >
-          Checking Profile
-        </motion.div>
-      </div>
-    );
 
   if (loading)
     return (
@@ -423,7 +413,7 @@ export default function CreateProfile() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          key={step}
+          // key={step}
           className="mt-2 flex flex-col items-center flex-grow gap-4 w-full"
         >
           {/* Step 1: Name */}
@@ -435,8 +425,8 @@ export default function CreateProfile() {
               <h4>What name would like to us to call you?</h4>
               <input
                 type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
+                value={formData.fullName}
+                onChange={(e) => handleInputChange("fullName", e.target.value)}
                 className="pt-20 border-b-2 border-gray-300 focus:border-emerald-500 w-full text-center text-lg outline-none transition duration-200"
                 placeholder="Enter your name"
               />
@@ -470,9 +460,9 @@ export default function CreateProfile() {
                 ].map((option) => (
                   <button
                     key={option.label}
-                    onClick={() => setGender(option.label)}
+                    onClick={() => handleInputChange("gender", option.label)}
                     className={`flex items-center justify-center gap-3 w-[220px] py-3 rounded-xl text-lg font-semibold transition-all duration-200 ${
-                      gender === option.label
+                      formData.gender === option.label
                         ? "bg-emerald-100 text-emerald-700 shadow-md border-2 border-emerald-300"
                         : "bg-white border border-gray-300 text-gray-700 hover:bg-emerald-50"
                     }`}
@@ -510,46 +500,34 @@ export default function CreateProfile() {
                 <input
                   type="date"
                   id="birthday"
-                  value={birthDate || ""}
-                  onChange={(e) => setBirthDate(e.target.value)}
+                  value={formData.birthDate || ""}
+                  onChange={(e) =>
+                    handleInputChange("birthDate", e.target.value)
+                  }
                   className="w-full px-4 py-3 rounded-xl border border-green-300 text-gray-700 
                             focus:outline-none focus:ring-2 focus:ring-green-400 
                             transition duration-200 cursor-pointer"
                 />
 
                 {/* Age Preview */}
-                {birthDate &&
-                  (() => {
-                    const birth = new Date(birthDate);
-                    const today = new Date();
-                    let age = today.getFullYear() - birth.getFullYear();
-                    const m = today.getMonth() - birth.getMonth();
-                    if (
-                      m < 0 ||
-                      (m === 0 && today.getDate() < birth.getDate())
-                    ) {
-                      age--;
-                    }
-
-                    return (
-                      <p className="mt-4 text-sm text-gray-600">
-                        You are{" "}
-                        <span
-                          className={`font-semibold ${
-                            age < 18 ? "text-red-500" : "text-green-600"
-                          }`}
-                        >
-                          {age}
-                        </span>{" "}
-                        years old.
-                        {age < 18 && (
-                          <span className="block text-red-500 mt-1 font-medium">
-                            You must be at least 18 years old to continue.
-                          </span>
-                        )}
-                      </p>
-                    );
-                  })()}
+                {formData.birthDate && (
+                  <p className="mt-4 text-sm text-gray-600">
+                    You are{" "}
+                    <span
+                      className={`font-semibold ${
+                        formData.age < 18 ? "text-red-500" : "text-green-600"
+                      }`}
+                    >
+                      {formData.age}
+                    </span>{" "}
+                    years old.
+                    {formData.age < 18 && (
+                      <span className="block text-red-500 mt-1 font-medium">
+                        You must be at least 18 years old to continue.
+                      </span>
+                    )}
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -564,9 +542,9 @@ export default function CreateProfile() {
                 {goalOptions.map((g) => (
                   <div
                     key={g}
-                    onClick={() => toggleItem(g, goals, setGoals)}
+                    onClick={() => toggleArrayItem("goals", g)}
                     className={`p-4 rounded-xl cursor-pointer border ${
-                      goals.includes(g)
+                      formData.goals.includes(g)
                         ? "bg-emerald-600 text-white border-emerald-600"
                         : "bg-white border-gray-200 hover:bg-emerald-100"
                     }`}
@@ -585,21 +563,30 @@ export default function CreateProfile() {
                 How would you describe your eating style?
               </h2>
               <div className="flex flex-col gap-2 w-full">
-                {eatingStyles.map((style) => (
-                  <div
-                    key={style.name}
-                    onClick={() => setSelectedStyle(style.name)}
-                    className={`p-4 rounded-xl cursor-pointer border ${
-                      selectedStyle === style.name
-                        ? "bg-emerald-600 text-white border-emerald-600"
-                        : "bg-white border-gray-200 hover:bg-emerald-100"
-                    }`}
-                  >
-                    <h3 className="font-semibold">{style.name}</h3>
-                    <p className="text-xs">{style.description}</p>
-                    <p className="text-xs">{style.breakdown}</p>
-                  </div>
-                ))}
+                {eatingStyles.map((style) => {
+                  const isSelected = formData.selectedStyle === style.name;
+                  return (
+                    <button
+                      key={style.name}
+                      type="button"
+                      onClick={() =>
+                        handleInputChange(
+                          "selectedStyle",
+                          isSelected ? "" : style.name
+                        )
+                      }
+                      className={`w-full text-left p-4 rounded-xl cursor-pointer border transition-all duration-200 focus:outline-none ${
+                        isSelected
+                          ? "bg-emerald-600 text-white border-emerald-600"
+                          : "bg-white border-gray-200 hover:bg-emerald-100"
+                      }`}
+                    >
+                      <h3 className="font-semibold">{style.name}</h3>
+                      <p className="text-xs">{style.description}</p>
+                      <p className="text-xs">{style.breakdown}</p>
+                    </button>
+                  );
+                })}
               </div>
             </>
           )}
@@ -632,7 +619,9 @@ export default function CreateProfile() {
                         {cat.name}
                       </h3>
                       <span className="text-emerald-600 text-sm font-medium hover:underline">
-                        {cat.items.every((i) => selectedAllergens.includes(i))
+                        {cat.items.every((i) =>
+                          formData.selectedAllergens.includes(i)
+                        )
                           ? "Deselect all"
                           : "Select all"}
                       </span>
@@ -644,14 +633,14 @@ export default function CreateProfile() {
                         <label
                           key={item}
                           className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium shadow-sm transition-all duration-200 cursor-pointer ${
-                            selectedAllergens.includes(item)
+                            formData.selectedAllergens.includes(item)
                               ? "bg-emerald-100 border-emerald-300 text-emerald-700 shadow-md"
                               : "bg-white border-gray-200 text-gray-700 hover:bg-emerald-50 hover:border-emerald-300"
                           }`}
                         >
                           <input
                             type="checkbox"
-                            checked={selectedAllergens.includes(item)}
+                            checked={formData.selectedAllergens.includes(item)}
                             onChange={() => toggleAllergen(item)}
                             className="accent-emerald-600 w-4 h-4"
                           />
@@ -675,11 +664,9 @@ export default function CreateProfile() {
                 {healthOptions.map((cond) => (
                   <div
                     key={cond}
-                    onClick={() =>
-                      toggleItem(cond, healthConditions, setHealthConditions)
-                    }
+                    onClick={() => toggleArrayItem("healthConditions", cond)}
                     className={`p-4 rounded-xl cursor-pointer border ${
-                      healthConditions.includes(cond)
+                      formData.healthConditions.includes(cond)
                         ? "bg-emerald-600 text-white border-emerald-600"
                         : "bg-white border-gray-200 hover:bg-emerald-100"
                     }`}
@@ -701,9 +688,9 @@ export default function CreateProfile() {
                 {activityOptions.map((lvl) => (
                   <div
                     key={lvl}
-                    onClick={() => setActivityLevel(lvl)}
+                    onClick={() => handleInputChange("activityLevel", lvl)}
                     className={`p-4 rounded-xl cursor-pointer border ${
-                      activityLevel === lvl
+                      formData.activityLevel === lvl
                         ? "bg-emerald-600 text-white border-emerald-600"
                         : "bg-white border-gray-200 hover:bg-emerald-100"
                     }`}
@@ -723,9 +710,9 @@ export default function CreateProfile() {
               </h2>
               <div className="flex justify-center gap-4 mt-4">
                 <button
-                  onClick={() => setHeightUnit("cm")}
+                  onClick={() => handleInputChange("heightUnit", "cm")}
                   className={`px-4 py-2 rounded-full border ${
-                    heightUnit === "cm"
+                    formData.heightUnit === "cm"
                       ? "bg-emerald-600 text-white border-emerald-600"
                       : "bg-white border-gray-300 hover:bg-emerald-100"
                   }`}
@@ -733,9 +720,9 @@ export default function CreateProfile() {
                   cm
                 </button>
                 <button
-                  onClick={() => setHeightUnit("ft")}
+                  onClick={() => handleInputChange("heightUnit", "ft")}
                   className={`px-4 py-2 rounded-full border ${
-                    heightUnit === "ft"
+                    formData.heightUnit === "ft"
                       ? "bg-emerald-600 text-white border-emerald-600"
                       : "bg-white border-gray-300 hover:bg-emerald-100"
                   }`}
@@ -743,11 +730,13 @@ export default function CreateProfile() {
                   ft/in
                 </button>
               </div>
-              {heightUnit === "cm" ? (
+              {formData.heightUnit === "cm" ? (
                 <input
                   type="number"
-                  value={heightCm}
-                  onChange={(e) => setHeightCm(e.target.value)}
+                  value={formData.heightCm}
+                  onChange={(e) =>
+                    handleInputChange("heightCm", e.target.value)
+                  }
                   placeholder="e.g., 170"
                   className="border-b-2 w-full text-center text-lg outline-none pt-20 mt-4"
                 />
@@ -755,15 +744,19 @@ export default function CreateProfile() {
                 <div className="flex gap-2 justify-center mt-4">
                   <input
                     type="number"
-                    value={heightFt}
-                    onChange={(e) => setHeightFt(e.target.value)}
+                    value={formData.heightFt}
+                    onChange={(e) =>
+                      handleInputChange("heightFt", e.target.value)
+                    }
                     placeholder="ft"
                     className="w-20 border-b-2 text-center text-lg outline-none"
                   />
                   <input
                     type="number"
-                    value={heightIn}
-                    onChange={(e) => setHeightIn(e.target.value)}
+                    value={formData.heightIn}
+                    onChange={(e) =>
+                      handleInputChange("heightIn", e.target.value)
+                    }
                     placeholder="in"
                     className="w-20 border-b-2 text-center text-lg outline-none"
                   />
@@ -780,9 +773,9 @@ export default function CreateProfile() {
               </h2>
               <div className="flex justify-center gap-4 mt-4">
                 <button
-                  onClick={() => setWeightUnit("kg")}
+                  onClick={() => handleInputChange("weightUnit", "kg")}
                   className={`px-4 py-2 rounded-full border ${
-                    weightUnit === "kg"
+                    formData.weightUnit === "kg"
                       ? "bg-emerald-600 text-white border-emerald-600"
                       : "bg-white border-gray-300 hover:bg-emerald-100"
                   }`}
@@ -790,9 +783,9 @@ export default function CreateProfile() {
                   kg
                 </button>
                 <button
-                  onClick={() => setWeightUnit("lbs")}
+                  onClick={() => handleInputChange("weightUnit", "lbs")}
                   className={`px-4 py-2 rounded-full border ${
-                    weightUnit === "lbs"
+                    formData.weightUnit === "lbs"
                       ? "bg-emerald-600 text-white border-emerald-600"
                       : "bg-white border-gray-300 hover:bg-emerald-100"
                   }`}
@@ -802,9 +795,11 @@ export default function CreateProfile() {
               </div>
               <input
                 type="number"
-                value={weight}
-                onChange={(e) => setWeight(e.target.value)}
-                placeholder={`e.g., ${weightUnit === "kg" ? "65" : "143"}`}
+                value={formData.weight}
+                onChange={(e) => handleInputChange("weight", e.target.value)}
+                placeholder={`e.g., ${
+                  formData.weightUnit === "kg" ? "65" : "143"
+                }`}
                 className="border-b-2 w-full text-center text-lg outline-none pt-20 mt-4"
               />
             </>
@@ -821,9 +816,9 @@ export default function CreateProfile() {
                 {[2, 3, 4, 5, 6].map((num) => (
                   <button
                     key={num}
-                    onClick={() => setMealsPerDay(num)}
+                    onClick={() => handleInputChange("mealsPerDay", num)}
                     className={`px-6 py-3 rounded-xl text-lg font-medium border ${
-                      mealsPerDay === num
+                      formData.mealsPerDay === num
                         ? "bg-emerald-600 text-white border-emerald-600"
                         : "bg-white border-gray-200 hover:bg-emerald-100"
                     }`}
@@ -847,8 +842,10 @@ export default function CreateProfile() {
                 <input
                   type="number"
                   min={1}
-                  value={goalDays}
-                  onChange={(e) => setGoalDays(Number(e.target.value))}
+                  value={formData.goalDays}
+                  onChange={(e) =>
+                    handleInputChange("goalDays", Number(e.target.value))
+                  }
                   className="border rounded-lg px-2 py-1 w-20"
                 />
               </div>

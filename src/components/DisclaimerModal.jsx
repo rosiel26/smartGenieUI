@@ -4,9 +4,9 @@ import { FiArrowLeft } from "react-icons/fi";
 const DisclaimerModal = ({ onAcknowledge }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-      <div className="bg-white w-full max-w-lg h-[90vh] max-h-[720px] rounded-3xl shadow-2xl overflow-hidden flex flex-col border border-green-100 animate-fadeIn">
+      <div className="bg-white  w-[340px] h-[90vh] max-h-[500px] rounded-3xl shadow-2xl overflow-hidden flex flex-col border-2 border-lime-500 animate-fadeIn">
         {/* Header */}
-        <div className="bg-green-600 p-5 text-white shadow-lg flex items-center justify-between flex-shrink-0">
+        <div className=" p-5 text-lime-500 shadow-lg flex items-center justify-between flex-shrink-0">
           <div className="w-6"></div>
           <div className="font-bold text-lg">Disclaimer</div>
           <div className="w-6"></div>
@@ -89,8 +89,8 @@ const DisclaimerModal = ({ onAcknowledge }) => {
           <section className="bg-green-50 p-4 rounded-xl shadow-sm">
             <h2 className="font-semibold text-green-800 mb-2">7. Contact</h2>
             <p>
-              For questions or concerns regarding this disclaimer, please contact
-              us through the Contact Us page in the app.
+              For questions or concerns regarding this disclaimer, please
+              contact us through the Contact Us page in the app.
             </p>
           </section>
         </div>
@@ -99,7 +99,7 @@ const DisclaimerModal = ({ onAcknowledge }) => {
         <div className="p-4 border-t border-gray-200 bg-white">
           <button
             onClick={onAcknowledge}
-            className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+            className="w-full bg-black text-white py-3 rounded-lg hover:bg-lime-500 hover:text-black hover:font-semibold transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
           >
             Acknowledge and Continue
           </button>

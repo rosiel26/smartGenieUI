@@ -136,7 +136,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 sm:py-3 rounded-xl shadow-lg transition duration-300 text-sm sm:text-base"
+            className="w-full bg-black hover:bg-lime-700 text-white font-semibold py-2 sm:py-3 rounded-xl shadow-lg transition duration-300 text-sm sm:text-base"
           >
             {loading ? "Signing In..." : "Sign In"}
           </button>
@@ -156,7 +156,7 @@ export default function Login() {
             className="flex items-center justify-center gap-2 w-full border border-gray-300 rounded-xl py-2 hover:bg-gray-50 transition"
           >
             <FcGoogle size={22} />
-            <span className="text-sm sm:text-base font-medium text-gray-700">
+            <span className="text-sm sm:text-base font-medium text-gray-700 hover:text-green-600 transition">
               Continue with Google
             </span>
           </button>
@@ -166,7 +166,7 @@ export default function Login() {
             className="flex items-center justify-center gap-2 w-full border border-gray-300 rounded-xl py-2 hover:bg-gray-50 transition"
           >
             <FaFacebook size={22} className="text-blue-600" />
-            <span className="text-sm sm:text-base font-medium text-gray-700">
+            <span className="text-sm sm:text-base font-medium text-gray-700 hover:text-blue-600 transition">
               Continue with Facebook
             </span>
           </button>
@@ -178,14 +178,14 @@ export default function Login() {
             Don’t have an account?{" "}
             <span
               onClick={() => navigate("/signup")}
-              className="text-green-600 hover:underline cursor-pointer"
+              className="text-lime-600 hover:underline hover:font-medium cursor-pointer"
             >
               Create one
             </span>
           </p>
           <p
             onClick={() => navigate("/forgot-password")}
-            className="text-green-600 hover:underline cursor-pointer"
+            className="text-lime-600 hover:underline hover:font-medium cursor-pointer"
           >
             Forgot your password?
           </p>
